@@ -1,5 +1,10 @@
-import { kv } from "@vercel/kv";
+import { Redis } from "@upstash/redis";
 import { NextResponse } from "next/server";
+
+const redis = new Redis({
+  url: process.env.KV_REST_API_URL!,
+  token: process.env.KV_REST_API_TOKEN!,
+});
 
 interface Vote {
   name: string;
@@ -9,21 +14,8 @@ interface Vote {
 
 const VOTES_KEY = "baby-votes";
 
-async function getVotes(): Promise<Record<string, Vote[]>> {
-  try {
-    const votes = await kv.get<Record<string, Vote[]>>(VOTES_KEY);
-    return votes || {};
-  } catch {
-    return {};
-  }
-}
-
-async function saveVotes(votes: Record<string, Vote[]>): Promise<void> {
-  await kv.set(VOTES_KEY, votes);
-}
-
 export async function GET() {
-  const votes = await getVotes();
+  const votes = (await redis.get<Record<string, Vote[]>>(VOTES_KEY)) || {};
 
   const summary: Record<string, { count: number; names: string[] }> = {};
   for (const [date, dateVotes] of Object.entries(votes)) {
@@ -47,7 +39,8 @@ export async function POST(request: Request) {
     );
   }
 
-  const votes = await getVotes();
+  const votes =
+    (await redis.get<Record<string, Vote[]>>(VOTES_KEY)) || {};
 
   if (!votes[date]) {
     votes[date] = [];
@@ -59,7 +52,7 @@ export async function POST(request: Request) {
     timestamp: new Date().toISOString(),
   });
 
-  await saveVotes(votes);
+  await redis.set(VOTES_KEY, votes);
 
   return NextResponse.json({ success: true, date, name });
 }
