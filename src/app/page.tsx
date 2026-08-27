@@ -120,7 +120,7 @@ export default function Home() {
             ¿Cuándo nace la bebé? ¡Vota por el día!
           </p>
           <p className="text-sm text-gray-500 mt-1">
-            21 de Septiembre - 25 de Octubre 2025
+            21 de Septiembre - 25 de Octubre 2026
           </p>
         </div>
 
