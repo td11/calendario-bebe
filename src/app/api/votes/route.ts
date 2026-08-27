@@ -1,10 +1,16 @@
-import { Redis } from "@upstash/redis";
+import { createClient } from "redis";
 import { NextResponse } from "next/server";
 
-const redis = new Redis({
-  url: process.env.KV_REST_API_URL!,
-  token: process.env.KV_REST_API_TOKEN!,
-});
+let redis: ReturnType<typeof createClient> | null = null;
+
+async function getRedis() {
+  if (!redis) {
+    redis = createClient({ url: process.env.REDIS_URL! });
+    redis.on("error", (err) => console.error("Redis error", err));
+    await redis.connect();
+  }
+  return redis;
+}
 
 interface Vote {
   name: string;
@@ -15,7 +21,9 @@ interface Vote {
 const VOTES_KEY = "baby-votes";
 
 export async function GET() {
-  const votes = (await redis.get<Record<string, Vote[]>>(VOTES_KEY)) || {};
+  const client = await getRedis();
+  const raw = await client.get(VOTES_KEY);
+  const votes: Record<string, Vote[]> = raw ? JSON.parse(raw) : {};
 
   const summary: Record<string, { count: number; names: string[] }> = {};
   for (const [date, dateVotes] of Object.entries(votes)) {
@@ -39,8 +47,9 @@ export async function POST(request: Request) {
     );
   }
 
-  const votes =
-    (await redis.get<Record<string, Vote[]>>(VOTES_KEY)) || {};
+  const client = await getRedis();
+  const raw = await client.get(VOTES_KEY);
+  const votes: Record<string, Vote[]> = raw ? JSON.parse(raw) : {};
 
   if (!votes[date]) {
     votes[date] = [];
@@ -52,7 +61,7 @@ export async function POST(request: Request) {
     timestamp: new Date().toISOString(),
   });
 
-  await redis.set(VOTES_KEY, votes);
+  await client.set(VOTES_KEY, JSON.stringify(votes));
 
   return NextResponse.json({ success: true, date, name });
 }
