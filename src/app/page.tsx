@@ -13,7 +13,7 @@ interface VotesData {
 
 function getDaysInRange(): { date: string; day: number; month: string }[] {
   const days: { date: string; day: number; month: string }[] = [];
-  const startDate = new Date(2025, 8, 21);
+  const startDate = new Date(2025, 8, 18);
   const endDate = new Date(2025, 9, 25);
 
   const monthNames = [
@@ -120,7 +120,7 @@ export default function Home() {
             ¿Cuándo nace la bebé? ¡Vota por el día!
           </p>
           <p className="text-sm text-gray-500 mt-1">
-            21 de Septiembre - 25 de Octubre 2026
+            18 de Septiembre - 25 de Octubre 2026
           </p>
         </div>
 
@@ -140,7 +140,7 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-7 gap-2">
             {(() => {
-              const firstDay = new Date(2025, 8, 21);
+              const firstDay = new Date(2025, 8, 18);
               const dayOfWeek = (firstDay.getDay() + 6) % 7;
               return Array.from({ length: dayOfWeek }).map((_, i) => (
                 <div key={`empty-${i}`} />
@@ -279,7 +279,7 @@ export default function Home() {
                     <div className="flex-1">
                       <div className="flex justify-between items-center mb-1">
                         <span className="font-semibold text-gray-800">
-                          {d?.day} de {d?.month}
+                          {d ? `${d.day} de ${d.month}` : entry.date}
                         </span>
                         <span className="text-sm text-gray-500">
                           {entry.count} voto{entry.count !== 1 ? "s" : ""}
